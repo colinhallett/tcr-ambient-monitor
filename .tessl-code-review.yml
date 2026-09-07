@@ -1,0 +1,15 @@
+schemaVersion: 1
+
+reviewMode: relaxed
+requestChangesAt: major
+
+lenses:
+  # 1. Custom DSP & Web Audio Architecture Lens
+  - ref: ./skills/review-audio-dsp/SKILL.md
+    globs:
+      - 'src/audio/**'
+
+  # 2. Custom Telemetry, Privacy & Daemon Performance Lens
+  - ref: ./skills/review-telemetry-privacy-perf/SKILL.md
+    globs:
+      - 'src/telemetry/**'

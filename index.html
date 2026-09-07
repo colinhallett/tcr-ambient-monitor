@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ambient System Slop — Generative Music & Telemetry Visualizer</title>
+    <style>
+      :root {
+        --bg-color: #0a0e17;
+        --card-bg: rgba(18, 26, 43, 0.75);
+        --accent-cyan: #00f2fe;
+        --accent-purple: #9d4edd;
+        --accent-amber: #ff9e00;
+        --text-primary: #f0f4f8;
+        --text-secondary: #94a3b8;
+        --border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      #visualizer-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+
+      .hud-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 24px;
+      }
+
+      .interactive {
+        pointer-events: auto;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .title-group h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .title-group p {
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+
+      .badge-connected {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(0, 242, 254, 0.12);
+        color: var(--accent-cyan);
+        border: 1px solid rgba(0, 242, 254, 0.3);
+      }
+
+      .badge-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--accent-cyan);
+        box-shadow: 0 0 8px var(--accent-cyan);
+      }
+
+      .badge-dot.offline {
+        background-color: #ef4444;
+        box-shadow: 0 0 8px #ef4444;
+      }
+
+      .metrics-grid {
+        display: flex;
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .metric-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(12px);
+        border-radius: 10px;
+        padding: 12px 16px;
+        min-width: 130px;
+      }
+
+      .metric-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+      }
+
+      .metric-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .metric-bar-bg {
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        margin-top: 6px;
+        overflow: hidden;
+      }
+
+      .metric-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: var(--accent-cyan);
+        transition: width 0.3s ease-out;
+      }
+
+      footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+
+      .controls-cluster {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .btn {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.25);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+        color: #051329;
+        font-weight: 700;
+        border: none;
+      }
+
+      .btn-primary:hover {
+        box-shadow: 0 0 16px rgba(0, 242, 254, 0.4);
+      }
+
+      .hint-box {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(12px);
+        padding: 8px 14px;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="visualizer-canvas"></canvas>
+
+    <div class="hud-overlay">
+      <header>
+        <div class="title-group">
+          <h1>Ambient System Slop</h1>
+          <p>Generative audio landscape modulated by real-time OS telemetry</p>
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-label">CPU Load</div>
+              <div class="metric-value" id="val-cpu">0%</div>
+              <div class="metric-bar-bg"><div class="metric-bar-fill" id="bar-cpu"></div></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Memory</div>
+              <div class="metric-value" id="val-mem">0%</div>
+              <div class="metric-bar-bg"><div class="metric-bar-fill" id="bar-mem"></div></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Audio Tension</div>
+              <div class="metric-value" id="val-tension">0.00</div>
+              <div class="metric-bar-bg"><div class="metric-bar-fill" id="bar-tension" style="background: var(--accent-purple);"></div></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Note Density</div>
+              <div class="metric-value" id="val-density">0.00</div>
+              <div class="metric-bar-bg"><div class="metric-bar-fill" id="bar-density" style="background: var(--accent-amber);"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="interactive">
+          <div class="badge-connected" id="status-badge">
+            <span class="badge-dot" id="status-dot"></span>
+            <span id="status-text">Connecting to Telemetry...</span>
+          </div>
+        </div>
+      </header>
+
+      <footer>
+        <div class="controls-cluster interactive">
+          <button class="btn btn-primary" id="btn-toggle-audio">
+            <span id="audio-icon">▶</span>
+            <span id="audio-label">Start Ambient Engine</span>
+          </button>
+          <button class="btn" id="btn-simulate-pulse">⚡ Trigger Activity Pulse</button>
+        </div>
+
+        <div class="hint-box">
+          Press any key or move your mouse to introduce activity into the ambient landscape
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
