@@ -20,11 +20,15 @@ class AmbientApp {
 
   private valCpu!: HTMLElement;
   private valMem!: HTMLElement;
+  private valNet!: HTMLElement;
+  private valPower!: HTMLElement;
   private valTension!: HTMLElement;
   private valDensity!: HTMLElement;
 
   private barCpu!: HTMLElement;
   private barMem!: HTMLElement;
+  private barNet!: HTMLElement;
+  private barPower!: HTMLElement;
   private barTension!: HTMLElement;
   private barDensity!: HTMLElement;
 
@@ -56,11 +60,15 @@ class AmbientApp {
 
     this.valCpu = document.getElementById('val-cpu') as HTMLElement;
     this.valMem = document.getElementById('val-mem') as HTMLElement;
+    this.valNet = document.getElementById('val-net') as HTMLElement;
+    this.valPower = document.getElementById('val-power') as HTMLElement;
     this.valTension = document.getElementById('val-tension') as HTMLElement;
     this.valDensity = document.getElementById('val-density') as HTMLElement;
 
     this.barCpu = document.getElementById('bar-cpu') as HTMLElement;
     this.barMem = document.getElementById('bar-mem') as HTMLElement;
+    this.barNet = document.getElementById('bar-net') as HTMLElement;
+    this.barPower = document.getElementById('bar-power') as HTMLElement;
     this.barTension = document.getElementById('bar-tension') as HTMLElement;
     this.barDensity = document.getElementById('bar-density') as HTMLElement;
   }
@@ -85,16 +93,22 @@ class AmbientApp {
 
     this.btnSimulatePulse.addEventListener('click', () => {
       this.sendActivityPulse(5);
+      this.visualizer.addShockwave();
     });
 
     // Capture user interaction rate safely (never logging or storing keys)
     window.addEventListener('keydown', () => {
       this.sendActivityPulse(1);
+      this.visualizer.addShockwave();
     });
 
     let mouseThrottle = 0;
-    window.addEventListener('mousemove', () => {
+    window.addEventListener('mousemove', (e) => {
       const now = Date.now();
+      // Calculate normalized stereo pan from mouse X position (-1.0 to 1.0)
+      const pan = (e.clientX / window.innerWidth) * 2 - 1;
+      this.audioEngine.setPan(pan);
+
       if (now - mouseThrottle > 120) {
         mouseThrottle = now;
         this.sendActivityPulse(0.5);
@@ -145,17 +159,28 @@ class AmbientApp {
     };
   }
 
+  private formatBandwidth(bytesPerSec: number): string {
+    if (bytesPerSec < 1024) return `${bytesPerSec} B/s`;
+    if (bytesPerSec < 1024 * 1024) return `${(bytesPerSec / 1024).toFixed(1)} KB/s`;
+    return `${(bytesPerSec / (1024 * 1024)).toFixed(2)} MB/s`;
+  }
+
   private updateUiMetrics(metrics: SystemMetrics, modulation: SoundModulationParameters): void {
     const cpuPct = Math.round(metrics.cpuUsage * 100);
     const memPct = Math.round(metrics.memoryUsage * 100);
+    const totalBandwidth = metrics.network.bytesInPerSec + metrics.network.bytesOutPerSec;
 
     this.valCpu.textContent = `${cpuPct}%`;
     this.valMem.textContent = `${memPct}%`;
+    this.valNet.textContent = this.formatBandwidth(totalBandwidth);
+    this.valPower.textContent = `${metrics.power.batteryPct}% ${metrics.power.isCharging ? '⚡' : '🔋'}`;
     this.valTension.textContent = modulation.tension.toFixed(2);
     this.valDensity.textContent = modulation.density.toFixed(2);
 
     this.barCpu.style.width = `${cpuPct}%`;
     this.barMem.style.width = `${memPct}%`;
+    this.barNet.style.width = `${Math.round(metrics.network.activity * 100)}%`;
+    this.barPower.style.width = `${metrics.power.batteryPct}%`;
     this.barTension.style.width = `${Math.round(modulation.tension * 100)}%`;
     this.barDensity.style.width = `${Math.round(modulation.density * 100)}%`;
   }

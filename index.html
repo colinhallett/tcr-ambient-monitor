@@ -11,6 +11,7 @@
         --accent-cyan: #00f2fe;
         --accent-purple: #9d4edd;
         --accent-amber: #ff9e00;
+        --accent-green: #10b981;
         --text-primary: #f0f4f8;
         --text-secondary: #94a3b8;
         --border-color: rgba(255, 255, 255, 0.1);
@@ -109,7 +110,8 @@
 
       .metrics-grid {
         display: flex;
-        gap: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
         margin-top: 16px;
       }
 
@@ -118,20 +120,20 @@
         border: 1px solid var(--border-color);
         backdrop-filter: blur(12px);
         border-radius: 10px;
-        padding: 12px 16px;
-        min-width: 130px;
+        padding: 10px 14px;
+        min-width: 120px;
       }
 
       .metric-label {
-        font-size: 0.7rem;
+        font-size: 0.68rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         color: var(--text-secondary);
-        margin-bottom: 6px;
+        margin-bottom: 4px;
       }
 
       .metric-value {
-        font-size: 1.25rem;
+        font-size: 1.15rem;
         font-weight: 700;
         font-variant-numeric: tabular-nums;
       }
@@ -214,7 +216,7 @@
       <header>
         <div class="title-group">
           <h1>Ambient System Slop</h1>
-          <p>Generative audio landscape modulated by real-time OS telemetry</p>
+          <p>Real-time telemetry: CPU, Memory, Network I/O & Interaction</p>
           <div class="metrics-grid">
             <div class="metric-card">
               <div class="metric-label">CPU Load</div>
@@ -225,6 +227,16 @@
               <div class="metric-label">Memory</div>
               <div class="metric-value" id="val-mem">0%</div>
               <div class="metric-bar-bg"><div class="metric-bar-fill" id="bar-mem"></div></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Network I/O</div>
+              <div class="metric-value" id="val-net">0 KB/s</div>
+              <div class="metric-bar-bg"><div class="metric-bar-fill" id="bar-net" style="background: var(--accent-green);"></div></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Power</div>
+              <div class="metric-value" id="val-power">100%</div>
+              <div class="metric-bar-bg"><div class="metric-bar-fill" id="bar-power" style="background: var(--accent-cyan);"></div></div>
             </div>
             <div class="metric-card">
               <div class="metric-label">Audio Tension</div>
@@ -253,11 +265,11 @@
             <span id="audio-icon">▶</span>
             <span id="audio-label">Start Ambient Engine</span>
           </button>
-          <button class="btn" id="btn-simulate-pulse">⚡ Trigger Activity Pulse</button>
+          <button class="btn" id="btn-simulate-pulse">⚡ Trigger Activity Shockwave</button>
         </div>
 
         <div class="hint-box">
-          Press any key or move your mouse to introduce activity into the ambient landscape
+          Click anywhere or press keys to send shockwaves &bull; Move mouse to pan audio
         </div>
       </footer>
     </div>
