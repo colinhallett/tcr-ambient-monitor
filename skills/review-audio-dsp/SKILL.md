@@ -21,6 +21,7 @@ Review only files responsible for audio synthesis, Web Audio node routing, param
 ### B. Glitch & Pop Prevention (Must-Fix)
 - Continuous parameter changes (e.g., filter cutoff, resonance, oscillator pitch, gain modulation) must use continuous audio-rate ramping (such as `rampTo()`, `linearRampToValueAtTime()`, or `setTargetAtTime()`).
 - Instantaneous assignments (`setValueAtTime()` or direct property sets) during active playback create high-frequency audio pops, DC offset thumps, or buffer discontinuities.
+- Effect parameters that regenerate an impulse response (IR) on every assignment — such as reverb decay length on a convolution reverb — must not be set in recurring update callbacks (e.g., telemetry handlers, animation frames, or interval loops). Setting such parameters unconditionally on every update cycle triggers expensive OfflineContext rendering on every call. Set IR-generating parameters once at initialization or gate reassignment behind a meaningful threshold check; one-off intentional changes or user-triggered reconfigurations are acceptable.
 
 ### C. Master Headroom & Clipping Safety (Must-Fix)
 - Audio routing into master outputs must include headroom management (e.g. `Tone.Limiter`, master gain ceiling <= 0.85) to prevent digital clipping / distortion when multiple polyphonic layers overlap.
