@@ -41,13 +41,14 @@ export class AmbientAudioEngine {
   ];
   private currentChordIndex = 0;
   private currentModulation: SoundModulationParameters | null = null;
+  private currentVolumeLevel = 0.8;
 
   public async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
     // Master bus with Limiter protection to eliminate clipping
     this.masterLimiter = new Tone.Limiter(-1).toDestination();
-    this.masterGain = new Tone.Gain(0.8).connect(this.masterLimiter);
+    this.masterGain = new Tone.Gain(this.currentVolumeLevel * 0.85).connect(this.masterLimiter);
 
     // Dynamic spatial panner
     this.panner = new Tone.Panner(0).connect(this.masterGain);
@@ -187,10 +188,12 @@ export class AmbientAudioEngine {
 
   public setMasterVolume(level: number): void {
     // level: 0.0 to 1.0; smooth exponential ramp to avoid pops
-    if (!this.isInitialized) return;
     const clamped = Math.max(0, Math.min(1, level));
-    const targetGain = clamped * 0.85;
-    this.masterGain.gain.rampTo(targetGain, 0.08, Tone.now());
+    this.currentVolumeLevel = clamped;
+    if (this.isInitialized) {
+      const targetGain = clamped * 0.85;
+      this.masterGain.gain.rampTo(targetGain, 0.08, Tone.now());
+    }
   }
 
   public setPan(panValue: number): void {
