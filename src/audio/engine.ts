@@ -185,6 +185,14 @@ export class AmbientAudioEngine {
     Tone.getTransport().bpm.rampTo(params.tempoBpm, 1.0);
   }
 
+  public setMasterVolume(level: number): void {
+    // level: 0.0 to 1.0; smooth exponential ramp to avoid pops
+    if (!this.isInitialized) return;
+    const clamped = Math.max(0, Math.min(1, level));
+    const targetGain = clamped * 0.85;
+    this.masterGain.gain.rampTo(targetGain, 0.08, Tone.now());
+  }
+
   public setPan(panValue: number): void {
     // panValue between -1.0 (left) and 1.0 (right)
     if (!this.isInitialized || !this.isRunning) return;

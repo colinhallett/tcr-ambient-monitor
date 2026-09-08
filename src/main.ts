@@ -31,6 +31,7 @@ class AmbientApp {
   private barPower!: HTMLElement;
   private barTension!: HTMLElement;
   private barDensity!: HTMLElement;
+  private sliderVolume!: HTMLInputElement;
 
   constructor() {
     const canvas = document.getElementById('visualizer-canvas') as HTMLCanvasElement;
@@ -71,6 +72,7 @@ class AmbientApp {
     this.barPower = document.getElementById('bar-power') as HTMLElement;
     this.barTension = document.getElementById('bar-tension') as HTMLElement;
     this.barDensity = document.getElementById('bar-density') as HTMLElement;
+    this.sliderVolume = document.getElementById('slider-volume') as HTMLInputElement;
   }
 
   private setupEventListeners(): void {
@@ -94,6 +96,11 @@ class AmbientApp {
     this.btnSimulatePulse.addEventListener('click', () => {
       this.sendActivityPulse(5);
       this.visualizer.addShockwave();
+    });
+
+    this.sliderVolume.addEventListener('input', (e) => {
+      const val = parseFloat((e.target as HTMLInputElement).value) / 100;
+      this.audioEngine.setMasterVolume(val);
     });
 
     // Capture user interaction rate safely (never logging or storing keys)
