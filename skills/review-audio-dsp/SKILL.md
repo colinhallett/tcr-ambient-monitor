@@ -29,6 +29,12 @@ Review only files responsible for audio synthesis, Web Audio node routing, param
 - Ensure audio graph operations and `Tone.start()` / `audioContext.resume()` are gated behind explicit user gestures to comply with browser autoplay security policies.
 - Synths should gracefully handle context suspension without throwing unhandled exceptions.
 
+### E. Convolution Reverb IR Generation in Recurring Callbacks (Must-Fix)
+- Assigning `decay` or `preDelay` on a `Tone.Reverb` instance inside a recurring update method or audio loop triggers an async impulse-response regeneration on every cycle: a new `OfflineContext` is created and stereo noise is rendered to produce a replacement convolver buffer.
+- Configure convolution reverb parameters at initialization time or in response to a deliberate one-time user configuration event. Do not assign `decay` or `preDelay` inside continuous per-cycle callbacks or polling update methods.
+- If runtime variation in reverb character is needed, use the `wet` audio parameter instead (a plain audio-rate parameter that does not trigger buffer regeneration).
+- A single call after initialization or after a significant user event is acceptable; flag only recurring or continuous-loop assignments.
+
 ## 3. Reporting Guidance
 
 - Anchor each finding to the exact line number in the diff.
