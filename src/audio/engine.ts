@@ -25,6 +25,7 @@ export class AmbientAudioEngine {
   private droneSynth!: Tone.PolySynth;
   private arpeggioSynth!: Tone.PolySynth;
   private shimmerSynth!: Tone.PolySynth;
+  private subBassSynth!: Tone.Synth;
   private noiseGenerator!: Tone.Noise;
   private noiseFilter!: Tone.Filter;
   private noiseGain!: Tone.Gain;
@@ -119,7 +120,19 @@ export class AmbientAudioEngine {
     }).connect(this.delay);
     this.shimmerSynth.volume.value = -16;
 
-    // 4. Noise Bed
+    // 4. Dedicated Sub-Bass Synth (reused voice, zero dynamic node accumulation)
+    this.subBassSynth = new Tone.Synth({
+      oscillator: { type: 'sine' },
+      envelope: {
+        attack: 0.1,
+        decay: 2.2,
+        sustain: 0.0,
+        release: 1.0
+      }
+    }).connect(this.masterGain);
+    this.subBassSynth.volume.value = -8;
+
+    // 5. Noise Bed
     this.noiseFilter = new Tone.Filter({ frequency: 350, type: 'bandpass', Q: 4 }).connect(this.reverb);
     this.noiseGain = new Tone.Gain(0.03).connect(this.noiseFilter);
     this.noiseGenerator = new Tone.Noise('pink').connect(this.noiseGain);
@@ -192,6 +205,12 @@ export class AmbientAudioEngine {
     this.panner.pan.rampTo(clamped, 0.1);
   }
 
+  private triggerSubBassDrop(time: number): void {
+    // Reusable sub-bass voice with controlled envelope release to avoid dynamic node accumulation
+    if (!this.isRunning) return;
+    this.subBassSynth.triggerAttackRelease('E1', '2n', time, 0.7);
+  }
+
   private triggerNextDrone(): void {
     if (!this.isRunning) return;
 
@@ -209,6 +228,7 @@ export class AmbientAudioEngine {
 
       if (stepCount % 16 === 0) {
         this.triggerNextDrone();
+        this.triggerSubBassDrop(time);
       }
 
       // Density-modulated arpeggiator probability
