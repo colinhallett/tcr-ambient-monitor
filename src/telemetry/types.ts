@@ -4,7 +4,6 @@ export interface SystemMetrics {
   uptime: number;          // seconds
   loadAvg: number;         // 1-minute load average normalized by core count
   activityRate: number;    // 0.0 to 1.0 (recent event/tick activity rate)
-  lastActiveKey?: string;  // Active key identifier for harmonic pitch shifts
   network: {
     bytesInPerSec: number;   // Download bandwidth in B/s
     bytesOutPerSec: number;  // Upload bandwidth in B/s
