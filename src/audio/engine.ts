@@ -25,6 +25,7 @@ export class AmbientAudioEngine {
   private droneSynth!: Tone.PolySynth;
   private arpeggioSynth!: Tone.PolySynth;
   private shimmerSynth!: Tone.PolySynth;
+  private subBassSynth!: Tone.Synth;
   private noiseGenerator!: Tone.Noise;
   private noiseFilter!: Tone.Filter;
   private noiseGain!: Tone.Gain;
@@ -119,7 +120,19 @@ export class AmbientAudioEngine {
     }).connect(this.delay);
     this.shimmerSynth.volume.value = -16;
 
-    // 4. Noise Bed
+    // 4. Dedicated Sub-Bass Synth (reused voice, zero dynamic node accumulation)
+    this.subBassSynth = new Tone.Synth({
+      oscillator: { type: 'sine' },
+      envelope: {
+        attack: 0.1,
+        decay: 2.2,
+        sustain: 0.0,
+        release: 1.0
+      }
+    }).connect(this.masterGain);
+    this.subBassSynth.volume.value = -8;
+
+    // 5. Noise Bed
     this.noiseFilter = new Tone.Filter({ frequency: 350, type: 'bandpass', Q: 4 }).connect(this.reverb);
     this.noiseGain = new Tone.Gain(0.03).connect(this.noiseFilter);
     this.noiseGenerator = new Tone.Noise('pink').connect(this.noiseGain);
@@ -166,9 +179,9 @@ export class AmbientAudioEngine {
 
     const now = Tone.now();
 
-    // Direct filter cutoff update based on CPU tension
+    // Smooth filter cutoff ramp based on CPU tension (400Hz - 4200Hz)
     const targetCutoff = 400 + params.tension * 3800;
-    this.mainFilter.frequency.value = targetCutoff;
+    this.mainFilter.frequency.rampTo(targetCutoff, 0.4, now);
 
     // Timbre & resonance modulation
     this.mainFilter.Q.rampTo(1.0 + params.timbre * 4.5, 0.5, now);
@@ -193,14 +206,9 @@ export class AmbientAudioEngine {
   }
 
   private triggerSubBassDrop(time: number): void {
-    // Dynamic sub-bass oscillator layer for deep atmospheric resonance
-    const subOsc = new Tone.Oscillator({
-      frequency: 41.2, // E1 sub
-      type: 'sine'
-    }).connect(this.masterGain);
-
-    subOsc.start(time);
-    subOsc.stop(time + 2.5);
+    // Reusable sub-bass voice with controlled envelope release to avoid dynamic node accumulation
+    if (!this.isRunning) return;
+    this.subBassSynth.triggerAttackRelease('E1', '2n', time, 0.7);
   }
 
   private triggerNextDrone(): void {
