@@ -22,6 +22,7 @@ export class TelemetryCollector {
   private lastSampleTime = Date.now();
   private activityPulseCounter = 0;
   private maxObservedPulse = 20;
+  private lastActiveKey: string | undefined = undefined;
 
   // Cached auxiliary metrics to prevent I/O blocking
   private cachedNetwork = { bytesInPerSec: 0, bytesOutPerSec: 0, activity: 0 };
@@ -115,6 +116,11 @@ export class TelemetryCollector {
     this.activityPulseCounter += weight;
   }
 
+  public registerKeyInput(key: string): void {
+    this.lastActiveKey = key;
+    this.activityPulseCounter += 1;
+  }
+
   public sampleMetrics(): SystemMetrics {
     const currentSnapshot = this.getCpuSnapshot();
     let cpuUsage = 0.1;
@@ -144,6 +150,7 @@ export class TelemetryCollector {
       uptime: os.uptime(),
       loadAvg,
       activityRate,
+      lastActiveKey: this.lastActiveKey,
       network: { ...this.cachedNetwork },
       power: { ...this.cachedPower },
       timestamp: Date.now()

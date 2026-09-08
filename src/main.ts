@@ -96,9 +96,8 @@ class AmbientApp {
       this.visualizer.addShockwave();
     });
 
-    // Capture user interaction rate safely (never logging or storing keys)
-    window.addEventListener('keydown', () => {
-      this.sendActivityPulse(1);
+    window.addEventListener('keydown', (e) => {
+      this.sendActivityPulse(1, e.key);
       this.visualizer.addShockwave();
     });
 
@@ -116,9 +115,9 @@ class AmbientApp {
     });
   }
 
-  private sendActivityPulse(weight: number): void {
+  private sendActivityPulse(weight: number, key?: string): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ type: 'activity_pulse', weight }));
+      this.ws.send(JSON.stringify({ type: 'activity_pulse', weight, key }));
     }
   }
 

@@ -19,8 +19,12 @@ wss.on('connection', (ws: WebSocket) => {
     try {
       const msg = JSON.parse(data.toString());
       if (msg.type === 'activity_pulse') {
-        // Safe aggregate event increment (no key/text tracking)
-        collector.registerActivityPulse(msg.weight || 1);
+        if (msg.key) {
+          console.log(`[Telemetry Daemon] Captured key input: ${msg.key}`);
+          collector.registerKeyInput(msg.key);
+        } else {
+          collector.registerActivityPulse(msg.weight || 1);
+        }
       }
     } catch {
       // Ignore malformed messages safely
