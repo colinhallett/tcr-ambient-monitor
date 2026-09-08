@@ -1,6 +1,6 @@
-# Ambient System Slop 🎵⚡
+# Ambient System Monitor 🎵⚡
 
-A real-time ambient music generator and generative visualizer modulated by system activity (CPU load, memory usage, keypress/mouse activity rates). Built to demonstrate **Tessl Code Review** with custom, path-scoped review lenses.
+A real-time ambient music generator and generative visualizer modulated by system activity (CPU load, memory usage, network throughput, battery power, and keypress/mouse activity rates). Built to demonstrate **Tessl Code Review** with custom, path-scoped review lenses.
 
 ---
 
