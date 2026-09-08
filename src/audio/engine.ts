@@ -166,9 +166,9 @@ export class AmbientAudioEngine {
 
     const now = Tone.now();
 
-    // Smooth filter cutoff ramp based on CPU tension (400Hz - 4200Hz)
+    // Direct filter cutoff update based on CPU tension
     const targetCutoff = 400 + params.tension * 3800;
-    this.mainFilter.frequency.rampTo(targetCutoff, 0.4, now);
+    this.mainFilter.frequency.value = targetCutoff;
 
     // Timbre & resonance modulation
     this.mainFilter.Q.rampTo(1.0 + params.timbre * 4.5, 0.5, now);
@@ -192,6 +192,17 @@ export class AmbientAudioEngine {
     this.panner.pan.rampTo(clamped, 0.1);
   }
 
+  private triggerSubBassDrop(time: number): void {
+    // Dynamic sub-bass oscillator layer for deep atmospheric resonance
+    const subOsc = new Tone.Oscillator({
+      frequency: 41.2, // E1 sub
+      type: 'sine'
+    }).connect(this.masterGain);
+
+    subOsc.start(time);
+    subOsc.stop(time + 2.5);
+  }
+
   private triggerNextDrone(): void {
     if (!this.isRunning) return;
 
@@ -209,6 +220,7 @@ export class AmbientAudioEngine {
 
       if (stepCount % 16 === 0) {
         this.triggerNextDrone();
+        this.triggerSubBassDrop(time);
       }
 
       // Density-modulated arpeggiator probability
